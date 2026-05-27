@@ -32,18 +32,18 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer as createHttpServer, IncomingMessage, ServerResponse } from "node:http";
 import matter from "gray-matter";
+import { createRequire } from "node:module";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 interface Skill {
   name: string;
@@ -102,20 +102,16 @@ function resolveConfig(flags: CliFlags): ResolvedConfig {
     process.env.KKSKILLS_TRANSPORT === "http"
       ? ("http" as const)
       : process.env.KKSKILLS_TRANSPORT === "stdio"
-      ? ("stdio" as const)
-      : undefined;
+        ? ("stdio" as const)
+        : undefined;
 
-  const envPort = process.env.KKSKILLS_PORT
-    ? Number(process.env.KKSKILLS_PORT)
-    : undefined;
+  const envPort = process.env.KKSKILLS_PORT ? Number(process.env.KKSKILLS_PORT) : undefined;
 
   const transport = flags.transport ?? envTransport ?? "stdio";
   const port = flags.port ?? envPort ?? 3030;
   const host = flags.host ?? process.env.KKSKILLS_HOST ?? "127.0.0.1";
   const skillsRoot =
-    flags.skillsRoot ??
-    process.env.KKSKILLS_ROOT ??
-    resolve(__dirname, "..", "..", "skills");
+    flags.skillsRoot ?? process.env.KKSKILLS_ROOT ?? resolve(__dirname, "..", "..", "skills");
 
   if (Number.isNaN(port) || port <= 0 || port > 65535) {
     throw new Error(`Invalid port: ${port}`);
@@ -198,10 +194,7 @@ async function loadSkills(root: string): Promise<Skill[]> {
 // ─── MCP server (tools) ──────────────────────────────────────────────────────
 
 function buildServer(skills: Skill[]): Server {
-  const server = new Server(
-    { name: "kkskills-mcp", version: "0.2.0" },
-    { capabilities: { tools: {} } }
-  );
+  const server = new Server({ name: "kkskills-mcp", version }, { capabilities: { tools: {} } });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
@@ -349,76 +342,64 @@ async function readBody(req: IncomingMessage): Promise<unknown> {
   }
 }
 
-async function startHttp(
-  skills: Skill[],
-  port: number,
-  host: string
-): Promise<void> {
-  const httpServer = createHttpServer(
-    async (req: IncomingMessage, res: ServerResponse) => {
-      const url = new URL(req.url ?? "/", `http://${req.headers.host ?? host}`);
+async function startHttp(skills: Skill[], port: number, host: string): Promise<void> {
+  const httpServer = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
+    const url = new URL(req.url ?? "/", `http://${req.headers.host ?? host}`);
 
-      // Health check
-      if (req.method === "GET" && url.pathname === "/healthz") {
-        res.writeHead(200, { "content-type": "text/plain" });
-        res.end(`ok\nloaded ${skills.length} skill(s)\n`);
-        return;
-      }
+    // Health check
+    if (req.method === "GET" && url.pathname === "/healthz") {
+      res.writeHead(200, { "content-type": "text/plain" });
+      res.end(`ok\nloaded ${skills.length} skill(s)\n`);
+      return;
+    }
 
-      // MCP endpoint
-      if (url.pathname !== "/mcp") {
-        res.writeHead(404, { "content-type": "text/plain" });
-        res.end("Not found. Try POST /mcp or GET /healthz.\n");
-        return;
-      }
+    // MCP endpoint
+    if (url.pathname !== "/mcp") {
+      res.writeHead(404, { "content-type": "text/plain" });
+      res.end("Not found. Try POST /mcp or GET /healthz.\n");
+      return;
+    }
 
-      try {
-        // Stateless mode: fresh server + transport per request.
-        // Simpler for a personal skill library; no session continuity needed
-        // because tool calls are independent.
-        const server = buildServer(skills);
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: undefined, // stateless
-          enableJsonResponse: true, // respond with JSON, no SSE required
-        });
+    try {
+      // Stateless mode: fresh server + transport per request.
+      // Simpler for a personal skill library; no session continuity needed
+      // because tool calls are independent.
+      const server = buildServer(skills);
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined, // stateless
+        enableJsonResponse: true, // respond with JSON, no SSE required
+      });
 
-        res.on("close", () => {
-          transport.close().catch(() => {});
-          server.close().catch(() => {});
-        });
+      res.on("close", () => {
+        transport.close().catch(() => {});
+        server.close().catch(() => {});
+      });
 
-        await server.connect(transport);
+      await server.connect(transport);
 
-        const body = req.method === "POST" ? await readBody(req) : undefined;
-        await transport.handleRequest(req, res, body);
-      } catch (err) {
-        process.stderr.write(
-          `[kkskills-mcp] HTTP handler error: ${(err as Error).stack ?? err}\n`
+      const body = req.method === "POST" ? await readBody(req) : undefined;
+      await transport.handleRequest(req, res, body);
+    } catch (err) {
+      process.stderr.write(`[kkskills-mcp] HTTP handler error: ${(err as Error).stack ?? err}\n`);
+      if (!res.headersSent) {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            error: { code: -32603, message: "Internal server error" },
+            id: null,
+          })
         );
-        if (!res.headersSent) {
-          res.writeHead(500, { "content-type": "application/json" });
-          res.end(
-            JSON.stringify({
-              jsonrpc: "2.0",
-              error: { code: -32603, message: "Internal server error" },
-              id: null,
-            })
-          );
-        } else {
-          res.end();
-        }
+      } else {
+        res.end();
       }
     }
-  );
+  });
 
   await new Promise<void>((resolveListen) => {
     httpServer.listen(port, host, () => {
-      process.stderr.write(
-        `[kkskills-mcp] HTTP listening on http://${host}:${port}/mcp\n`
-      );
-      process.stderr.write(
-        `[kkskills-mcp] Health: http://${host}:${port}/healthz\n`
-      );
+      process.stderr.write(`[kkskills-mcp] HTTP listening on http://${host}:${port}/mcp\n`);
+      process.stderr.write(`[kkskills-mcp] Health: http://${host}:${port}/healthz\n`);
       resolveListen();
     });
   });

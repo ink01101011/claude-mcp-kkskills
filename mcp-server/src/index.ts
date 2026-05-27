@@ -1,20 +1,37 @@
 #!/usr/bin/env node
 /**
  * kkskills-mcp — an MCP server that exposes a personal Claude skill library
- * as discoverable tools over stdio.
+ * as discoverable tools.
  *
  * Tools exposed:
- *   - list_skills:  returns every skill with name + description (used by the
- *                   AI to decide which skill is relevant).
- *   - read_skill:   takes a skill name, returns the full SKILL.md content.
+ *   - list_skills:   returns every skill with name + description (used by the
+ *                    AI to decide which skill is relevant).
+ *   - read_skill:    takes a skill name, returns the full SKILL.md content.
  *   - search_skills: free-text search across name/description/body.
  *
  * Skills live in <repo>/skills/<skill-name>/SKILL.md and are discovered at
  * startup. Frontmatter is parsed with gray-matter.
+ *
+ * Transport:
+ *   Default = stdio (for Claude Desktop / Claude Code / Cowork / Cursor).
+ *   --http  | KKSKILLS_TRANSPORT=http → Streamable HTTP (for claude.ai remote
+ *                                       connector, or any remote MCP host).
+ *
+ * CLI flags always win over env vars when both are set.
+ *
+ *   Flag           Env var               Default            Purpose
+ *   ----           -------               -------            -------
+ *   --http         KKSKILLS_TRANSPORT    stdio              Switch transport
+ *   --stdio        KKSKILLS_TRANSPORT    stdio              Force stdio
+ *   --port <n>     KKSKILLS_PORT         3030               HTTP listen port
+ *   --host <h>     KKSKILLS_HOST         127.0.0.1          HTTP bind address
+ *   --skills <p>   KKSKILLS_ROOT         <repo>/skills      Skills root dir
+ *   --help         —                     —                  Print usage
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -22,15 +39,11 @@ import {
 import { readFile, readdir, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createServer as createHttpServer, IncomingMessage, ServerResponse } from "node:http";
 import matter from "gray-matter";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// Default skills root: <repo>/skills (i.e. two levels up from dist/index.js)
-// Override with KKSKILLS_ROOT env var if the server runs from a different cwd.
-const SKILLS_ROOT =
-  process.env.KKSKILLS_ROOT ?? resolve(__dirname, "..", "..", "skills");
 
 interface Skill {
   name: string;
@@ -39,6 +52,109 @@ interface Skill {
   body: string;
   raw: string;
 }
+
+// ─── Config ──────────────────────────────────────────────────────────────────
+
+interface CliFlags {
+  transport?: "stdio" | "http";
+  port?: number;
+  host?: string;
+  skillsRoot?: string;
+  help?: boolean;
+}
+
+function parseArgs(argv: string[]): CliFlags {
+  const flags: CliFlags = {};
+  const args = argv.slice(2);
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    const eat = (): string => {
+      const next = args[++i];
+      if (next === undefined) throw new Error(`Missing value for flag '${a}'`);
+      return next;
+    };
+    if (a === "--http") flags.transport = "http";
+    else if (a === "--stdio") flags.transport = "stdio";
+    else if (a === "--port") flags.port = Number(eat());
+    else if (a.startsWith("--port=")) flags.port = Number(a.slice("--port=".length));
+    else if (a === "--host") flags.host = eat();
+    else if (a.startsWith("--host=")) flags.host = a.slice("--host=".length);
+    else if (a === "--skills") flags.skillsRoot = eat();
+    else if (a.startsWith("--skills=")) flags.skillsRoot = a.slice("--skills=".length);
+    else if (a === "--help" || a === "-h") flags.help = true;
+    else throw new Error(`Unknown flag: ${a}`);
+  }
+  return flags;
+}
+
+interface ResolvedConfig {
+  transport: "stdio" | "http";
+  port: number;
+  host: string;
+  skillsRoot: string;
+}
+
+/**
+ * Flag wins over env var. Env wins over default.
+ */
+function resolveConfig(flags: CliFlags): ResolvedConfig {
+  const envTransport =
+    process.env.KKSKILLS_TRANSPORT === "http"
+      ? ("http" as const)
+      : process.env.KKSKILLS_TRANSPORT === "stdio"
+      ? ("stdio" as const)
+      : undefined;
+
+  const envPort = process.env.KKSKILLS_PORT
+    ? Number(process.env.KKSKILLS_PORT)
+    : undefined;
+
+  const transport = flags.transport ?? envTransport ?? "stdio";
+  const port = flags.port ?? envPort ?? 3030;
+  const host = flags.host ?? process.env.KKSKILLS_HOST ?? "127.0.0.1";
+  const skillsRoot =
+    flags.skillsRoot ??
+    process.env.KKSKILLS_ROOT ??
+    resolve(__dirname, "..", "..", "skills");
+
+  if (Number.isNaN(port) || port <= 0 || port > 65535) {
+    throw new Error(`Invalid port: ${port}`);
+  }
+
+  return { transport, port, host, skillsRoot };
+}
+
+function printHelp(): void {
+  process.stdout.write(
+    `kkskills-mcp — MCP server exposing a personal Claude skill library
+
+Usage:
+  kkskills-mcp [options]
+
+Options:
+  --stdio                Use stdio transport (default).
+  --http                 Use Streamable HTTP transport.
+  --port <n>             HTTP listen port (default 3030).
+  --host <h>             HTTP bind address (default 127.0.0.1).
+  --skills <path>        Skills root directory (default <repo>/skills).
+  -h, --help             Show this help.
+
+Environment (overridden by flags):
+  KKSKILLS_TRANSPORT     stdio | http
+  KKSKILLS_PORT          HTTP listen port
+  KKSKILLS_HOST          HTTP bind address
+  KKSKILLS_ROOT          Skills root directory
+
+Examples:
+  kkskills-mcp                              # stdio, default skills
+  kkskills-mcp --http --port 4000           # HTTP on 0.0.0.0:4000 if --host 0.0.0.0
+  KKSKILLS_TRANSPORT=http kkskills-mcp      # HTTP via env
+  kkskills-mcp --stdio                      # force stdio even if env says http
+`
+  );
+}
+
+// ─── Skill loading ───────────────────────────────────────────────────────────
 
 async function loadSkills(root: string): Promise<Skill[]> {
   const skills: Skill[] = [];
@@ -79,17 +195,12 @@ async function loadSkills(root: string): Promise<Skill[]> {
   return skills;
 }
 
-function buildServer(skills: Skill[]) {
+// ─── MCP server (tools) ──────────────────────────────────────────────────────
+
+function buildServer(skills: Skill[]): Server {
   const server = new Server(
-    {
-      name: "kkskills-mcp",
-      version: "0.1.0",
-    },
-    {
-      capabilities: {
-        tools: {},
-      },
-    }
+    { name: "kkskills-mcp", version: "0.2.0" },
+    { capabilities: { tools: {} } }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -150,12 +261,7 @@ function buildServer(skills: Skill[]) {
         description: s.description,
       }));
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(summary, null, 2),
-          },
-        ],
+        content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
       };
     }
 
@@ -176,12 +282,7 @@ function buildServer(skills: Skill[]) {
         };
       }
       return {
-        content: [
-          {
-            type: "text",
-            text: skill.raw,
-          },
-        ],
+        content: [{ type: "text", text: skill.raw }],
       };
     }
 
@@ -210,38 +311,152 @@ function buildServer(skills: Skill[]) {
         .filter((x): x is NonNullable<typeof x> => x !== null);
 
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(hits, null, 2),
-          },
-        ],
+        content: [{ type: "text", text: JSON.stringify(hits, null, 2) }],
       };
     }
 
     return {
       isError: true,
-      content: [
-        {
-          type: "text",
-          text: `Unknown tool: ${name}`,
-        },
-      ],
+      content: [{ type: "text", text: `Unknown tool: ${name}` }],
     };
   });
 
   return server;
 }
 
-async function main() {
-  const skills = await loadSkills(SKILLS_ROOT);
-  process.stderr.write(
-    `[kkskills-mcp] Loaded ${skills.length} skill(s) from ${SKILLS_ROOT}\n`
-  );
+// ─── Transport: stdio ────────────────────────────────────────────────────────
+
+async function startStdio(skills: Skill[]): Promise<void> {
   const server = buildServer(skills);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   process.stderr.write("[kkskills-mcp] Listening on stdio\n");
+}
+
+// ─── Transport: Streamable HTTP (stateless) ──────────────────────────────────
+
+async function readBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(chunk as Buffer);
+  }
+  if (chunks.length === 0) return undefined;
+  const text = Buffer.concat(chunks).toString("utf-8");
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+async function startHttp(
+  skills: Skill[],
+  port: number,
+  host: string
+): Promise<void> {
+  const httpServer = createHttpServer(
+    async (req: IncomingMessage, res: ServerResponse) => {
+      const url = new URL(req.url ?? "/", `http://${req.headers.host ?? host}`);
+
+      // Health check
+      if (req.method === "GET" && url.pathname === "/healthz") {
+        res.writeHead(200, { "content-type": "text/plain" });
+        res.end(`ok\nloaded ${skills.length} skill(s)\n`);
+        return;
+      }
+
+      // MCP endpoint
+      if (url.pathname !== "/mcp") {
+        res.writeHead(404, { "content-type": "text/plain" });
+        res.end("Not found. Try POST /mcp or GET /healthz.\n");
+        return;
+      }
+
+      try {
+        // Stateless mode: fresh server + transport per request.
+        // Simpler for a personal skill library; no session continuity needed
+        // because tool calls are independent.
+        const server = buildServer(skills);
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined, // stateless
+          enableJsonResponse: true, // respond with JSON, no SSE required
+        });
+
+        res.on("close", () => {
+          transport.close().catch(() => {});
+          server.close().catch(() => {});
+        });
+
+        await server.connect(transport);
+
+        const body = req.method === "POST" ? await readBody(req) : undefined;
+        await transport.handleRequest(req, res, body);
+      } catch (err) {
+        process.stderr.write(
+          `[kkskills-mcp] HTTP handler error: ${(err as Error).stack ?? err}\n`
+        );
+        if (!res.headersSent) {
+          res.writeHead(500, { "content-type": "application/json" });
+          res.end(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              error: { code: -32603, message: "Internal server error" },
+              id: null,
+            })
+          );
+        } else {
+          res.end();
+        }
+      }
+    }
+  );
+
+  await new Promise<void>((resolveListen) => {
+    httpServer.listen(port, host, () => {
+      process.stderr.write(
+        `[kkskills-mcp] HTTP listening on http://${host}:${port}/mcp\n`
+      );
+      process.stderr.write(
+        `[kkskills-mcp] Health: http://${host}:${port}/healthz\n`
+      );
+      resolveListen();
+    });
+  });
+
+  // Hold the process open
+  await new Promise<void>(() => {});
+}
+
+// ─── Entrypoint ──────────────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  let flags: CliFlags;
+  try {
+    flags = parseArgs(process.argv);
+  } catch (err) {
+    process.stderr.write(`[kkskills-mcp] ${(err as Error).message}\n`);
+    printHelp();
+    process.exit(2);
+  }
+
+  if (flags.help) {
+    printHelp();
+    return;
+  }
+
+  const config = resolveConfig(flags);
+
+  const skills = await loadSkills(config.skillsRoot);
+  process.stderr.write(
+    `[kkskills-mcp] Loaded ${skills.length} skill(s) from ${config.skillsRoot}\n`
+  );
+  process.stderr.write(`[kkskills-mcp] Transport: ${config.transport}\n`);
+
+  if (config.transport === "http") {
+    await startHttp(skills, config.port, config.host);
+  } else {
+    await startStdio(skills);
+  }
 }
 
 main().catch((err) => {

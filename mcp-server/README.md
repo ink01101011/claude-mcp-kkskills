@@ -1,7 +1,7 @@
 # kkskills-mcp
 
-A local stdio MCP server that exposes a personal Claude skill library
-(`../skills/*/SKILL.md`) as discoverable tools.
+A local MCP server that exposes a personal Claude skill library
+(`../skills/*/SKILL.md`) as discoverable tools over **stdio** or **Streamable HTTP**.
 
 ## What it does
 
@@ -25,71 +25,59 @@ npm install
 npm run build
 ```
 
-Output goes to `dist/index.js`.
+Output: `dist/index.js`.
 
-## Run locally
+## Run
+
+### stdio (default)
 
 ```bash
 node dist/index.js
 ```
 
-The server prints status to `stderr` and serves the MCP protocol on `stdio`.
-It does nothing useful on its own — you wire it into a host (Claude Desktop,
-Cowork, Cursor, etc.).
+For local MCP hosts that spawn the server as a subprocess (Claude Desktop,
+Claude Code, Cowork, Cursor).
 
-## Wire into Claude Desktop / Cowork
+### Streamable HTTP
 
-Add an entry to your MCP server config. The exact location depends on the
-host:
-
-- **Claude Desktop (macOS):**
-  `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Cowork:** add via the MCP registry / connector UI, pointing at the
-  command and args below.
-
-```json
-{
-  "mcpServers": {
-    "kkskills": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/claude-mcp-kkskills/mcp-server/dist/index.js"
-      ]
-    }
-  }
-}
+```bash
+node dist/index.js --http                     # 127.0.0.1:3030
+node dist/index.js --http --port 4000         # custom port
+node dist/index.js --http --host 0.0.0.0      # expose externally
 ```
 
-If you move the repo or want to point at a different skills folder, set
-`KKSKILLS_ROOT`:
+For remote MCP hosts (claude.ai custom connectors, or any host that connects
+over the network). Endpoints:
 
-```json
-{
-  "mcpServers": {
-    "kkskills": {
-      "command": "node",
-      "args": ["/path/to/dist/index.js"],
-      "env": {
-        "KKSKILLS_ROOT": "/path/to/skills"
-      }
-    }
-  }
-}
-```
+- `POST /mcp` — JSON-RPC 2.0 over HTTP (stateless, JSON response).
+- `GET /healthz` — plain-text health check that also reports skill count.
 
-Restart the host. The three tools (`list_skills`, `read_skill`,
-`search_skills`) will appear under the `kkskills` server.
+### Configuration — flag > env > default
+
+| Flag              | Env var                    | Default          |
+|-------------------|----------------------------|------------------|
+| `--stdio`         | `KKSKILLS_TRANSPORT=stdio` | `stdio`          |
+| `--http`          | `KKSKILLS_TRANSPORT=http`  | `stdio`          |
+| `--port <n>`      | `KKSKILLS_PORT`            | `3030`           |
+| `--host <h>`      | `KKSKILLS_HOST`            | `127.0.0.1`      |
+| `--skills <path>` | `KKSKILLS_ROOT`            | `<repo>/skills`  |
+| `--help`          | —                          | —                |
+
+CLI flags always override env vars when both are set, so a system-wide
+`KKSKILLS_TRANSPORT=http` can be overridden per-invocation with `--stdio`.
+
+## Wire into a host
+
+See the repo root `README.md` for step-by-step instructions for:
+- Claude Desktop (macOS / Windows)
+- Claude Code (CLI)
+- Cowork
+- Cursor / Continue.dev
+- claude.ai web (remote connector via HTTP)
 
 ## Add a new skill
 
-1. Create `../skills/<kebab-name>/SKILL.md` following the template in the
-   repo root (`SKILL_TEMPLATE.md`).
-2. Restart the MCP server — skills are loaded on startup.
+1. Create `../skills/<kebab-name>/SKILL.md` following `../SKILL_TEMPLATE.md`.
+2. Restart the MCP server (skills load at startup).
 
-See the repo's `CLAUDE.md` for when to add a new skill vs. update an existing one.
-
-## Why a server and not just files on disk?
-
-Skills as flat files only help if a host knows where to look. The MCP
-server makes them protocol-addressable, so any MCP-aware host (Claude
-Desktop, Cowork, Cursor, etc.) can discover and load them uniformly.
+See `../CLAUDE.md` for when to add a new skill vs. update an existing one.

@@ -1,0 +1,51 @@
+# kkskills-mcp — HTTP container.
+#
+# Usage:
+#   cp .env.example .env        # tweak overrides if you want
+#   docker compose up -d --build
+#   curl http://127.0.0.1:${KKSKILLS_PORT:-3030}/healthz
+#   docker compose logs -f
+#   docker compose down
+
+services:
+  kkskills-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kkskills-mcp:0.2.0
+    container_name: kkskills-mcp
+    restart: unless-stopped
+
+    # Env precedence inside the server: CLI flag > env var > default.
+    # docker-compose layers: shell env > .env file > `environment:` here.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      KKSKILLS_TRANSPORT: ${KKSKILLS_TRANSPORT:-http}
+      KKSKILLS_HOST: ${KKSKILLS_HOST:-0.0.0.0}
+      KKSKILLS_PORT: ${KKSKILLS_PORT:-3030}
+      KKSKILLS_ROOT: /app/skills
+
+    ports:
+      # Host:container — change the host side via KKSKILLS_PORT in .env
+      - "${KKSKILLS_PORT:-3030}:3030"
+
+    volumes:
+      # Mount local skills/ over the image-baked copy so edits don't require
+      # a rebuild. Read-only so the container can't corrupt source files.
+      # Comment this out to pin the runtime to whatever skills were baked in.
+      - ./skills:/app/skills:ro
+
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --quiet
+        - --tries=1
+        - --spider
+        - http://127.0.0.1:3030/healthz
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 3s

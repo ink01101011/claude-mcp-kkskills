@@ -1,7 +1,7 @@
 {
   "name": "kkskills-mcp",
-  "version": "0.1.0",
-  "description": "MCP server that exposes a personal Claude skill library as discoverable tools",
+  "version": "0.2.0",
+  "description": "MCP server that exposes a personal Claude skill library as discoverable tools (stdio + Streamable HTTP)",
   "type": "module",
   "bin": {
     "kkskills-mcp": "dist/index.js"
@@ -13,6 +13,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:http": "node dist/index.js --http",
     "dev": "tsc --watch"
   },
   "dependencies": {

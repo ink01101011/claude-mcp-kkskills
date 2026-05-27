@@ -1,11 +1,46 @@
 # claude-mcp-kkskills
 
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![Node ≥18](https://img.shields.io/badge/node-%E2%89%A518-brightgreen?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
+![MCP SDK](https://img.shields.io/badge/MCP%20SDK-%5E1.0.4-7C3AED)
+![Transports](https://img.shields.io/badge/transports-stdio%20%2B%20HTTP-6E40C9)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+![Skills](https://img.shields.io/badge/skills-9-orange)
+![Status](https://img.shields.io/badge/status-active-success)
+
 A personal Claude skill library exposed as an MCP server (stdio + Streamable HTTP).
 
 The repo holds two things:
 
 1. **A skill library** under `skills/` — one folder per skill, each containing a `SKILL.md` that defines triggers, process steps, rules, and examples.
 2. **A stdio + HTTP MCP server** under `mcp-server/` — a TypeScript Node server that exposes the skills as discoverable tools to any MCP-aware host (Claude Desktop, Claude Code CLI, Cowork, Cursor, claude.ai remote connectors, etc.).
+
+## At a glance
+
+- **What it is** — a personal Claude skill library + an MCP server that makes it protocol-addressable.
+- **Who it's for** — anyone who wants Claude (Desktop / Code / Cowork / Cursor / claude.ai) to load a consistent set of skills across every session, version-controlled in one repo.
+- **Skills shipped** — **9**, organised by prefix: `user-` (1) · `project-` (2) · `feedback-` (4) · `reference-` (2).
+- **Transports** — `stdio` for local hosts that spawn a subprocess, `Streamable HTTP` for remote connectors (claude.ai, CI, multi-user).
+- **Runtime** — Node ≥ 18, TypeScript, MCP SDK `^1.0.4`. Docker image + compose file included.
+- **No host config drift** — the library grows by adding folders under `skills/`; hosts only point at the server once.
+
+**60-second start** (stdio + Claude Desktop):
+
+```bash
+cd mcp-server && npm install && npm run build
+```
+
+Then add to `claude_desktop_config.json` and restart:
+
+```json
+"kkskills": {
+  "command": "node",
+  "args": ["/absolute/path/to/mcp-server/dist/index.js"]
+}
+```
+
+Need HTTP, Docker, or a remote connector instead? Jump to [Quick start](#quick-start-5-steps).
 
 ## Why
 

@@ -11,6 +11,75 @@ The repo holds two things:
 
 Skills as flat files only help if a host knows where to look. The MCP server makes them protocol-addressable: a host calls `list_skills`, picks the relevant one, calls `read_skill`, and applies the content. The library can grow without changing host configuration.
 
+## How it fits together
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'fontFamily': 'ui-monospace, SFMono-Regular, Menlo, monospace'}}}%%
+flowchart LR
+    subgraph Hosts["MCP-aware hosts"]
+        CD[Claude Desktop]
+        CC[Claude Code CLI]
+        CW[Cowork]
+        CU[Cursor / Continue]
+        WB[claude.ai web]
+    end
+
+    subgraph Server["kkskills-mcp (TypeScript Node)"]
+        T1[stdio transport]
+        T2[Streamable HTTP transport]
+        Core["Tool handlers:<br/>• list_skills<br/>• read_skill<br/>• search_skills"]
+        T1 --> Core
+        T2 --> Core
+    end
+
+    subgraph Library["skills/ library"]
+        S1[user-profile]
+        S2[project-trader-platform]
+        S3[project-sprint-roadmap]
+        S4[feedback-*  ×4]
+        S5[reference-*  ×2]
+    end
+
+    CD -. spawn .-> T1
+    CC -. spawn .-> T1
+    CW -. spawn .-> T1
+    CU -. spawn .-> T1
+    WB -. HTTPS .-> T2
+
+    Core -- read SKILL.md --> Library
+```
+
+And the runtime call sequence on every user prompt:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'fontFamily': 'ui-monospace, SFMono-Regular, Menlo, monospace'}}}%%
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant H as MCP Host
+    participant L as Claude (LLM)
+    participant S as kkskills-mcp
+    participant F as skills/*/SKILL.md
+
+    U->>H: ask a question
+    H->>L: prompt + tool defs
+    Note over L: needs context
+    L->>S: list_skills
+    S->>F: read frontmatter
+    F-->>S: name + description
+    S-->>L: [{name, description}, ...]
+    Note over L: pick the relevant skill
+    L->>S: read_skill(name)
+    S->>F: read full SKILL.md
+    F-->>S: complete markdown
+    S-->>L: SKILL.md content
+    Note over L: apply rules + checklist
+    L-->>H: response that follows the skill
+    H-->>U: final answer
+```
+
+> Full hand-tuned SVG / PNG versions of both diagrams live in [`diagrams/`](./diagrams/) — useful for slide decks, blog posts, and social.
+
 ## What's in the library
 
 | Skill                              | When it applies                                                |
@@ -344,6 +413,12 @@ claude-mcp-kkskills/
 │   ├── src/index.ts
 │   ├── package.json
 │   ├── tsconfig.json
+│   └── README.md
+├── diagrams/                # Mermaid source + hand-tuned SVG
+│   ├── sequence-flow.mmd
+│   ├── sequence-flow.svg
+│   ├── architecture.mmd
+│   ├── architecture.svg
 │   └── README.md
 ├── Dockerfile               # 3-stage build for HTTP container
 ├── docker-compose.yml       # one-command HTTP bring-up

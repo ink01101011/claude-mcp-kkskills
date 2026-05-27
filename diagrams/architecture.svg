@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="arrowDash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="720" fill="#fafafa"/>
+
+  <!-- title -->
+  <text x="600" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">kkskills-mcp — architecture at a glance</text>
+  <text x="600" y="68" text-anchor="middle" font-size="13" fill="#6b7280">One TypeScript Node server. Two transports. Nine skills. Any MCP-aware host.</text>
+
+  <!-- ── Column 1: Hosts ── -->
+  <g>
+    <rect x="40" y="100" width="280" height="540" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="180" y="128" text-anchor="middle" font-size="14" font-weight="700" fill="#5b21b6">MCP-aware hosts</text>
+    <text x="180" y="146" text-anchor="middle" font-size="11" fill="#7c3aed">spawn as subprocess (stdio) / connect over HTTPS</text>
+
+    <g font-size="12" fill="#1f2937">
+      <rect x="70" y="180" width="220" height="50" rx="6" fill="#ede9fe" stroke="#a78bfa"/>
+      <text x="180" y="200" text-anchor="middle" font-weight="700">Claude Desktop</text>
+      <text x="180" y="217" text-anchor="middle" font-size="10" fill="#6d28d9">macOS / Windows • stdio</text>
+
+      <rect x="70" y="245" width="220" height="50" rx="6" fill="#ede9fe" stroke="#a78bfa"/>
+      <text x="180" y="265" text-anchor="middle" font-weight="700">Claude Code CLI</text>
+      <text x="180" y="282" text-anchor="middle" font-size="10" fill="#6d28d9">claude mcp add • stdio</text>
+
+      <rect x="70" y="310" width="220" height="50" rx="6" fill="#ede9fe" stroke="#a78bfa"/>
+      <text x="180" y="330" text-anchor="middle" font-weight="700">Cowork</text>
+      <text x="180" y="347" text-anchor="middle" font-size="10" fill="#6d28d9">desktop • stdio</text>
+
+      <rect x="70" y="375" width="220" height="50" rx="6" fill="#ede9fe" stroke="#a78bfa"/>
+      <text x="180" y="395" text-anchor="middle" font-weight="700">Cursor / Continue.dev</text>
+      <text x="180" y="412" text-anchor="middle" font-size="10" fill="#6d28d9">editor • stdio</text>
+
+      <rect x="70" y="440" width="220" height="50" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="180" y="460" text-anchor="middle" font-weight="700">claude.ai web</text>
+      <text x="180" y="477" text-anchor="middle" font-size="10" fill="#92400e">custom connector • HTTPS</text>
+
+      <rect x="70" y="505" width="220" height="50" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="180" y="525" text-anchor="middle" font-weight="700">Docker host</text>
+      <text x="180" y="542" text-anchor="middle" font-size="10" fill="#92400e">docker compose up • HTTPS</text>
+    </g>
+  </g>
+
+  <!-- arrows hosts → server -->
+  <g>
+    <!-- stdio paths (solid) -->
+    <line x1="290" y1="205" x2="450" y2="290" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+    <line x1="290" y1="270" x2="450" y2="300" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+    <line x1="290" y1="335" x2="450" y2="310" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+    <line x1="290" y1="400" x2="450" y2="320" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+    <!-- HTTPS paths (dashed) -->
+    <line x1="290" y1="465" x2="450" y2="430" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrowDash)"/>
+    <line x1="290" y1="530" x2="450" y2="440" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrowDash)"/>
+  </g>
+
+  <!-- ── Column 2: server ── -->
+  <g>
+    <rect x="450" y="160" width="300" height="380" rx="10" fill="#ffffff" stroke="#ea580c" stroke-width="2"/>
+    <text x="600" y="188" text-anchor="middle" font-size="14" font-weight="700" fill="#9a3412">kkskills-mcp</text>
+    <text x="600" y="206" text-anchor="middle" font-size="11" fill="#ea580c">TypeScript Node • @modelcontextprotocol/sdk</text>
+
+    <!-- transports -->
+    <rect x="475" y="240" width="120" height="58" rx="6" fill="#1f2937"/>
+    <text x="535" y="260" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">stdio</text>
+    <text x="535" y="278" text-anchor="middle" font-size="9" fill="#9ca3af">StdioServer</text>
+    <text x="535" y="290" text-anchor="middle" font-size="9" fill="#9ca3af">Transport</text>
+
+    <rect x="605" y="240" width="120" height="58" rx="6" fill="#1f2937"/>
+    <text x="665" y="260" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Streamable HTTP</text>
+    <text x="665" y="278" text-anchor="middle" font-size="9" fill="#9ca3af">POST /mcp</text>
+    <text x="665" y="290" text-anchor="middle" font-size="9" fill="#9ca3af">GET /healthz</text>
+
+    <!-- arrows from transports into core -->
+    <line x1="535" y1="298" x2="535" y2="335" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+    <line x1="665" y1="298" x2="665" y2="335" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+    <!-- core -->
+    <rect x="475" y="340" width="250" height="160" rx="8" fill="#fff7ed" stroke="#fb923c"/>
+    <text x="600" y="364" text-anchor="middle" font-size="12" font-weight="700" fill="#9a3412">Tool handlers</text>
+
+    <g font-size="11" fill="#1f2937">
+      <rect x="495" y="380" width="210" height="32" rx="5" fill="#fff" stroke="#fdba74"/>
+      <text x="510" y="400" font-weight="700">list_skills()</text>
+      <text x="600" y="400" font-size="10" fill="#6b7280">→ [{name, description}, …]</text>
+
+      <rect x="495" y="418" width="210" height="32" rx="5" fill="#fff" stroke="#fdba74"/>
+      <text x="510" y="438" font-weight="700">read_skill(name)</text>
+      <text x="615" y="438" font-size="10" fill="#6b7280">→ full SKILL.md</text>
+
+      <rect x="495" y="456" width="210" height="32" rx="5" fill="#fff" stroke="#fdba74"/>
+      <text x="510" y="476" font-weight="700">search_skills(query)</text>
+      <text x="635" y="476" font-size="10" fill="#6b7280">→ snippets</text>
+    </g>
+  </g>
+
+  <!-- arrow server → skills -->
+  <line x1="725" y1="420" x2="880" y2="350" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow2)"/>
+  <text x="800" y="370" text-anchor="middle" font-size="11" fill="#1f2937" font-weight="600">read SKILL.md</text>
+  <text x="800" y="384" text-anchor="middle" font-size="10" fill="#6b7280">(at startup + on read_skill)</text>
+
+  <!-- ── Column 3: skills library ── -->
+  <g>
+    <rect x="880" y="100" width="280" height="540" rx="10" fill="#ffffff" stroke="#0891b2" stroke-width="2"/>
+    <text x="1020" y="128" text-anchor="middle" font-size="14" font-weight="700" fill="#155e75">skills/ library</text>
+    <text x="1020" y="146" text-anchor="middle" font-size="11" fill="#0891b2">one folder per skill • YAML frontmatter + body</text>
+
+    <g font-size="11" fill="#1f2937">
+      <rect x="905" y="170" width="230" height="40" rx="5" fill="#cffafe" stroke="#22d3ee"/>
+      <text x="1020" y="187" text-anchor="middle" font-weight="700">user-profile</text>
+      <text x="1020" y="201" text-anchor="middle" font-size="9" fill="#0e7490">tone, register, response style</text>
+
+      <rect x="905" y="220" width="230" height="40" rx="5" fill="#cffafe" stroke="#22d3ee"/>
+      <text x="1020" y="237" text-anchor="middle" font-weight="700">project-trader-platform</text>
+      <text x="1020" y="251" text-anchor="middle" font-size="9" fill="#0e7490">repo context, services, providers</text>
+
+      <rect x="905" y="270" width="230" height="40" rx="5" fill="#cffafe" stroke="#22d3ee"/>
+      <text x="1020" y="287" text-anchor="middle" font-weight="700">project-sprint-roadmap</text>
+      <text x="1020" y="301" text-anchor="middle" font-size="9" fill="#0e7490">3 tracks • 7 sprints</text>
+
+      <rect x="905" y="320" width="230" height="40" rx="5" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="1020" y="337" text-anchor="middle" font-weight="700">feedback-no-duplicate-docs</text>
+      <text x="1020" y="351" text-anchor="middle" font-size="9" fill="#92400e">single source of truth</text>
+
+      <rect x="905" y="370" width="230" height="40" rx="5" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="1020" y="387" text-anchor="middle" font-weight="700">feedback-use-full-filenames</text>
+      <text x="1020" y="401" text-anchor="middle" font-size="9" fill="#92400e">DDMMYYYY_NAME.md on first mention</text>
+
+      <rect x="905" y="420" width="230" height="40" rx="5" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="1020" y="437" text-anchor="middle" font-weight="700">feedback-verify-with-real-data</text>
+      <text x="1020" y="451" text-anchor="middle" font-size="9" fill="#92400e">grep first, probe data not endpoint</text>
+
+      <rect x="905" y="470" width="230" height="40" rx="5" fill="#fef3c7" stroke="#f59e0b"/>
+      <text x="1020" y="487" text-anchor="middle" font-weight="700">feedback-additive-changes</text>
+      <text x="1020" y="501" text-anchor="middle" font-size="9" fill="#92400e">new beats modify; legacy stays DORMANT</text>
+
+      <rect x="905" y="520" width="230" height="40" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="1020" y="537" text-anchor="middle" font-weight="700">reference-trader-platform-layout</text>
+      <text x="1020" y="551" text-anchor="middle" font-size="9" fill="#15803d">paths, naming, deploy</text>
+
+      <rect x="905" y="570" width="230" height="40" rx="5" fill="#dcfce7" stroke="#16a34a"/>
+      <text x="1020" y="587" text-anchor="middle" font-weight="700">reference-external-providers</text>
+      <text x="1020" y="601" text-anchor="middle" font-size="9" fill="#15803d">TD / AV / Finnhub / FMP</text>
+    </g>
+  </g>
+
+  <!-- footer -->
+  <g font-size="11" fill="#6b7280">
+    <line x1="320" y1="675" x2="360" y2="675" stroke="#1f2937" stroke-width="1.5" marker-end="url(#arrow2)"/>
+    <text x="368" y="679">stdio (local)</text>
+
+    <line x1="470" y1="675" x2="510" y2="675" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrowDash)"/>
+    <text x="518" y="679">HTTPS (remote)</text>
+
+    <text x="900" y="679" text-anchor="end">user-* / project-* / feedback-* / reference-*</text>
+
+    <text x="600" y="705" text-anchor="middle" font-size="12" fill="#9ca3af">github.com/&lt;your-username&gt;/claude-mcp-kkskills</text>
+  </g>
+</svg>

@@ -1,0 +1,33 @@
+%%{init: {'theme': 'base', 'themeVariables': {'fontFamily': 'ui-monospace, SFMono-Regular, Menlo, monospace'}}}%%
+flowchart LR
+    subgraph Hosts["MCP-aware hosts"]
+        CD[Claude Desktop]
+        CC[Claude Code CLI]
+        CW[Cowork]
+        CU[Cursor / Continue]
+        WB[claude.ai web]
+    end
+
+    subgraph Server["kkskills-mcp (TypeScript Node)"]
+        T1[stdio transport]
+        T2[Streamable HTTP transport]
+        Core["Tool handlers:<br/>• list_skills<br/>• read_skill<br/>• search_skills"]
+        T1 --> Core
+        T2 --> Core
+    end
+
+    subgraph Library["skills/ library"]
+        S1[user-profile]
+        S2[project-trader-platform]
+        S3[project-sprint-roadmap]
+        S4[feedback-*  ×4]
+        S5[reference-*  ×2]
+    end
+
+    CD -. spawn .-> T1
+    CC -. spawn .-> T1
+    CW -. spawn .-> T1
+    CU -. spawn .-> T1
+    WB -. HTTPS .-> T2
+
+    Core -- read SKILL.md --> Library

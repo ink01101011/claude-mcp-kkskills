@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="arrowReply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="900" fill="#fafafa"/>
+
+  <!-- title -->
+  <text x="600" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#111827">How a Claude session uses kkskills-mcp</text>
+  <text x="600" y="68" text-anchor="middle" font-size="13" fill="#6b7280">Runtime flow: prompt → tool call → skill load → response</text>
+
+  <!-- actor lifeline columns (centers at: 120, 360, 600, 840, 1080) -->
+  <!-- actor headers -->
+  <g font-size="13" font-weight="600">
+    <rect x="40"   y="100" width="160" height="46" rx="6" fill="#2563eb"/>
+    <text x="120" y="129" text-anchor="middle" fill="#fff">User</text>
+
+    <rect x="270"  y="100" width="180" height="46" rx="6" fill="#7c3aed"/>
+    <text x="360" y="122" text-anchor="middle" fill="#fff">MCP Host</text>
+    <text x="360" y="138" text-anchor="middle" fill="#ddd6fe" font-size="10" font-weight="400">Claude Desktop / CLI / Cowork</text>
+
+    <rect x="510"  y="100" width="180" height="46" rx="6" fill="#059669"/>
+    <text x="600" y="129" text-anchor="middle" fill="#fff">Claude (LLM)</text>
+
+    <rect x="750"  y="100" width="180" height="46" rx="6" fill="#ea580c"/>
+    <text x="840" y="122" text-anchor="middle" fill="#fff">kkskills-mcp</text>
+    <text x="840" y="138" text-anchor="middle" fill="#fed7aa" font-size="10" font-weight="400">stdio | Streamable HTTP</text>
+
+    <rect x="1000" y="100" width="160" height="46" rx="6" fill="#0891b2"/>
+    <text x="1080" y="122" text-anchor="middle" fill="#fff">skills/</text>
+    <text x="1080" y="138" text-anchor="middle" fill="#a5f3fc" font-size="10" font-weight="400">*/SKILL.md</text>
+  </g>
+
+  <!-- lifelines -->
+  <g stroke="#cbd5e1" stroke-dasharray="4 4">
+    <line x1="120"  y1="146" x2="120"  y2="840"/>
+    <line x1="360"  y1="146" x2="360"  y2="840"/>
+    <line x1="600"  y1="146" x2="600"  y2="840"/>
+    <line x1="840"  y1="146" x2="840"  y2="840"/>
+    <line x1="1080" y1="146" x2="1080" y2="840"/>
+  </g>
+
+  <!-- ─── messages ─── -->
+  <g font-size="11" fill="#1f2937">
+
+    <!-- 1. User → Host: ask -->
+    <line x1="120" y1="180" x2="354" y2="180" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="237" y="174" text-anchor="middle" font-weight="600">① ask a question</text>
+
+    <!-- 2. Host → LLM: prompt + tool defs -->
+    <line x1="360" y1="215" x2="594" y2="215" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="477" y="209" text-anchor="middle" font-weight="600">② prompt + tool defs</text>
+
+    <!-- note over LLM -->
+    <rect x="510" y="235" width="180" height="36" rx="4" fill="#fef3c7" stroke="#f59e0b"/>
+    <text x="600" y="250" text-anchor="middle" font-size="11" fill="#78350f">needs context for</text>
+    <text x="600" y="263" text-anchor="middle" font-size="11" fill="#78350f">this conversation</text>
+
+    <!-- 3. LLM → Server: list_skills -->
+    <line x1="600" y1="300" x2="834" y2="300" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="717" y="294" text-anchor="middle" font-weight="600">③ call_tool list_skills</text>
+
+    <!-- 4. Server → skills/ -->
+    <line x1="840" y1="330" x2="1074" y2="330" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="957" y="324" text-anchor="middle">④ read frontmatter</text>
+
+    <!-- 5. skills/ → Server (reply, dashed) -->
+    <line x1="1080" y1="360" x2="846" y2="360" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="957" y="354" text-anchor="middle" fill="#374151">⑤ name + description</text>
+
+    <!-- 6. Server → LLM (reply) -->
+    <line x1="840" y1="390" x2="606" y2="390" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="723" y="384" text-anchor="middle" fill="#374151">⑥ [{name, description}, …]</text>
+
+    <!-- note over LLM -->
+    <rect x="490" y="410" width="220" height="40" rx="4" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="600" y="426" text-anchor="middle" font-size="11" fill="#14532d">picks the relevant skill, e.g.</text>
+    <text x="600" y="440" text-anchor="middle" font-size="11" font-weight="700" fill="#14532d">feedback-additive-changes</text>
+
+    <!-- 7. LLM → Server: read_skill -->
+    <line x1="600" y1="480" x2="834" y2="480" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="717" y="474" text-anchor="middle" font-weight="600">⑦ call_tool read_skill(name)</text>
+
+    <!-- 8. Server → skills/ -->
+    <line x1="840" y1="510" x2="1074" y2="510" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="957" y="504" text-anchor="middle">⑧ read full SKILL.md</text>
+
+    <!-- 9. skills/ → Server -->
+    <line x1="1080" y1="540" x2="846" y2="540" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="957" y="534" text-anchor="middle" fill="#374151">⑨ complete markdown</text>
+
+    <!-- 10. Server → LLM -->
+    <line x1="840" y1="570" x2="606" y2="570" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="723" y="564" text-anchor="middle" fill="#374151">⑩ SKILL.md content</text>
+
+    <!-- note over LLM -->
+    <rect x="510" y="590" width="180" height="40" rx="4" fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="600" y="606" text-anchor="middle" font-size="11" fill="#4c1d95">apply Process / Steps</text>
+    <text x="600" y="620" text-anchor="middle" font-size="11" fill="#4c1d95">+ Rules &amp; Checklist</text>
+
+    <!-- 11. LLM → Host -->
+    <line x1="600" y1="665" x2="366" y2="665" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="483" y="659" text-anchor="middle" fill="#374151">⑪ response that follows the skill</text>
+
+    <!-- 12. Host → User -->
+    <line x1="360" y1="700" x2="126" y2="700" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="243" y="694" text-anchor="middle" fill="#374151">⑫ final answer</text>
+  </g>
+
+  <!-- footer legend -->
+  <g font-size="11" fill="#6b7280">
+    <line x1="40" y1="780" x2="80" y2="780" stroke="#1f2937" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="90" y="784">request / call</text>
+
+    <line x1="200" y1="780" x2="240" y2="780" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowReply)"/>
+    <text x="250" y="784">reply / data</text>
+
+    <rect x="380" y="772" width="14" height="14" rx="3" fill="#fef3c7" stroke="#f59e0b"/>
+    <text x="400" y="784">LLM decision</text>
+
+    <rect x="520" y="772" width="14" height="14" rx="3" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="540" y="784">skill selected</text>
+
+    <rect x="660" y="772" width="14" height="14" rx="3" fill="#ede9fe" stroke="#7c3aed"/>
+    <text x="680" y="784">skill applied</text>
+
+    <text x="600" y="860" text-anchor="middle" font-size="12" fill="#9ca3af">github.com/&lt;your-username&gt;/claude-mcp-kkskills</text>
+  </g>
+</svg>

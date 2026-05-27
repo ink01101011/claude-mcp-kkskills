@@ -1,0 +1,24 @@
+%%{init: {'theme': 'base', 'themeVariables': {'fontFamily': 'ui-monospace, SFMono-Regular, Menlo, monospace'}}}%%
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant H as MCP Host<br/>(Claude Desktop / CLI / Cowork)
+    participant L as Claude (LLM)
+    participant S as kkskills-mcp<br/>(stdio | HTTP)
+    participant F as skills/*/SKILL.md
+
+    U->>H: ask a question
+    H->>L: prompt + tool defs
+    Note over L: needs context for<br/>this conversation
+    L->>S: call_tool list_skills
+    S->>F: read frontmatter from each file
+    F-->>S: name + description
+    S-->>L: [{name, description}, ...]
+    Note over L: pick the relevant skill<br/>(e.g. feedback-additive-changes)
+    L->>S: call_tool read_skill(name)
+    S->>F: read full SKILL.md
+    F-->>S: complete markdown
+    S-->>L: SKILL.md content
+    Note over L: apply rules + checklist
+    L-->>H: response that follows the skill
+    H-->>U: final answer

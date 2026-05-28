@@ -17,6 +17,10 @@ mcp-server/dist/
 .env.*.local
 !.env.example
 
+# Local-only project context (kept out of git so each fork keeps its own)
+CLAUDE.local.md
+!CLAUDE.local.md.example
+
 # IDE
 .vscode/
 .idea/

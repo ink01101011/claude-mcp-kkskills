@@ -1,0 +1,26 @@
+# CLAUDE.local.md — <your-name>'s working quick-reference
+
+> This file is **gitignored**. It holds project-specific context that's only useful to your own setup — current skill inventory, codebase shortcuts, team conventions. Generic maintenance rules live in `CLAUDE.md`.
+>
+> To start: `cp CLAUDE.local.md.example CLAUDE.local.md`, then fill it in.
+
+## Current skill inventory
+
+List every skill currently in `skills/` and one line on when it applies. The AI reads this to decide which skill to pull on a given turn — be specific.
+
+| Skill                          | Apply when...                                            |
+|--------------------------------|----------------------------------------------------------|
+| `<your-skill-name>`            | <one-line "when it applies" hook>                        |
+| `<your-skill-name>`            | <one-line "when it applies" hook>                        |
+
+## Codebase shortcuts
+
+Project-specific commands, paths, conventions that the AI should know without being told every time. Examples:
+
+- `<repo-name>` deploy command: `<command>`
+- API tier / rate-limit quirks: `<note>`
+- Sprint structure / current focus: `<note>`
+
+## Notes that don't belong in a skill (yet)
+
+Use this section as a holding area for observations that aren't yet durable enough to be a skill but are worth not losing. When a note stabilises into a recurring pattern, promote it into the relevant `skills/<name>/SKILL.md` per `CLAUDE.md` decision rule.

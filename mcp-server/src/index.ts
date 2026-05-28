@@ -201,7 +201,7 @@ function buildServer(skills: Skill[]): Server {
       {
         name: "list_skills",
         description:
-          "List all available skills with their name and description. Call this first when you need to find a relevant skill for the current conversation. Skills cover the user's response-style preferences, the trader-platform project, sprint roadmap, recurring feedback patterns, and reference material on external providers.",
+          "List all available skills with their name and description. Call this first when you need to find a relevant skill for the current conversation. Skills cover the user's response-style preferences, project-specific context (trader-platform), recurring feedback patterns (no duplicate docs, additive changes, expand-contract migrations, verify with real data), and reference material (Clean Architecture across stacks, Conventional Commits format, external API providers, repo layout).",
         inputSchema: {
           type: "object",
           properties: {},

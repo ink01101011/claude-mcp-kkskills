@@ -9,18 +9,18 @@
 ![Skills](https://img.shields.io/badge/skills-9-orange)
 ![Status](https://img.shields.io/badge/status-active-success)
 
-A personal Claude skill library exposed as an MCP server (stdio + Streamable HTTP).
+A personal Claude skill library exposed as an MCP server (stdio + Streamable HTTP) — **also usable as a template** for building your own skill library.
 
 The repo holds two things:
 
-1. **A skill library** under `skills/` — one folder per skill, each containing a `SKILL.md` that defines triggers, process steps, rules, and examples.
+1. **A skill library** under `skills/` — one folder per skill, each containing a `SKILL.md` that defines triggers, process steps, rules, and examples. The shipped set is the author's working library; treat it as **reference / starter examples** if you're forking.
 2. **A stdio + HTTP MCP server** under `mcp-server/` — a TypeScript Node server that exposes the skills as discoverable tools to any MCP-aware host (Claude Desktop, Claude Code CLI, Cowork, Cursor, claude.ai remote connectors, etc.).
 
 ## At a glance
 
-- **What it is** — a personal Claude skill library + an MCP server that makes it protocol-addressable.
-- **Who it's for** — anyone who wants Claude (Desktop / Code / Cowork / Cursor / claude.ai) to load a consistent set of skills across every session, version-controlled in one repo.
-- **Skills shipped** — **9**, organised by prefix: `user-` (1) · `project-` (2) · `feedback-` (4) · `reference-` (2).
+- **What it is** — a personal Claude skill library + an MCP server that makes it protocol-addressable. Doubles as a **template scaffold** for your own library.
+- **Who it's for** — anyone who wants Claude (Desktop / Code / Cowork / Cursor / claude.ai) to load a consistent set of skills across every session, version-controlled in one repo. Forkers wanting a ready-made structure to drop their own skills into.
+- **Skills shipped** — **9**, organised by prefix: `user-` (1) · `project-` (2) · `feedback-` (4) · `reference-` (2). These are the author's working set — keep, edit, or wipe as you like (see [Use as a template](#use-as-your-own-skill-library-template)).
 - **Transports** — `stdio` for local hosts that spawn a subprocess, `Streamable HTTP` for remote connectors (claude.ai, CI, multi-user).
 - **Runtime** — Node ≥ 18, TypeScript, MCP SDK `^1.0.4`. Docker image + compose file included.
 - **No host config drift** — the library grows by adding folders under `skills/`; hosts only point at the server once.
@@ -117,6 +117,8 @@ sequenceDiagram
 
 ## What's in the library
 
+> The table below is the **author's working set**. If you forked this repo as a template, treat these as starter examples — they show the shape, naming, and tone a skill should take. See [Use as a template](#use-as-your-own-skill-library-template) for how to swap them for your own.
+
 | Skill                                  | When it applies                                                     |
 |----------------------------------------|---------------------------------------------------------------------|
 | `user-profile`                         | Calibrating tone, register, response style.                          |
@@ -133,6 +135,59 @@ sequenceDiagram
 | `reference-conventional-commits`       | Commit message / PR title / changelog format.                        |
 
 See `CLAUDE.md` for the maintenance rules — when to update an existing skill vs. add a new one — and `SKILL_TEMPLATE.md` for the structure each skill follows.
+
+---
+
+## Use as your own skill library template
+
+This repo is structured so that a fork can keep the **infrastructure** (MCP server, transport modes, Docker bring-up, host wiring instructions, template, decision-rule docs) and replace the **content** (the skills themselves, the project-specific quick-reference) without touching anything else.
+
+### What's generic (keep as-is)
+
+- `mcp-server/` — the TypeScript stdio + HTTP server. No project-specific code; reads whatever lives under `skills/`.
+- `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `.env.example` — runtime packaging.
+- `SKILL_TEMPLATE.md` — starter for every new skill, with the prefix convention documented inline.
+- `CLAUDE.md` — generic maintenance rules (decision loop, file structure, restart procedure).
+- This README's transport / wiring sections.
+
+### What's the author's (swap for your own)
+
+- Everything under `skills/` — the 9 shipped folders are the author's working set. Wipe, edit, or keep as starter examples.
+- `CLAUDE.local.md` — the author's project-specific quick-reference (skill inventory, codebase shortcuts). **Gitignored**, so it doesn't follow forks. Use `CLAUDE.local.md.example` to bootstrap your own.
+- This README's `## What's in the library` table — replace with your own skill list when you wipe `skills/`.
+
+### Fork checklist
+
+1. **Clone & rename**
+   ```bash
+   git clone https://github.com/<author>/claude-mcp-kkskills.git my-skills
+   cd my-skills
+   git remote remove origin
+   # optionally update package.json `name` and the badge in README.md
+   ```
+2. **Decide what to do with the shipped skills**
+   - **Keep as reference** — leave `skills/` alone for now, add your own folders alongside.
+   - **Wipe and start fresh** — `rm -rf skills/* && touch skills/.gitkeep`. Server will boot with 0 skills, `/healthz` will confirm.
+3. **Bootstrap your local context file**
+   ```bash
+   cp CLAUDE.local.md.example CLAUDE.local.md
+   # fill in your skill inventory + codebase shortcuts
+   ```
+4. **Update README content (not infrastructure)**
+   - `## What's in the library` table → your skills (or remove if `skills/` is empty).
+   - `skills-N` badge at the top → your count (or remove).
+   - `## At a glance` → adjust voice/focus if you want, the structure stays.
+5. **Add your first skill**
+   ```bash
+   mkdir -p skills/my-first-skill
+   cp SKILL_TEMPLATE.md skills/my-first-skill/SKILL.md
+   # edit frontmatter + sections per CLAUDE.md decision rule
+   ```
+6. **Build, smoke-test, wire to host** — follow [Quick start](#quick-start-5-steps) from Step 2 onward; nothing else changes for a fork.
+
+### Sensitive content
+
+`CLAUDE.local.md` is gitignored so personal/project context doesn't leak into a public fork. Anything that should stay private (internal paths, project codenames you don't want in git history, team-only shortcuts) belongs there, not in `CLAUDE.md` or in skill files. The `.gitignore` rule (`CLAUDE.local.md` + `!CLAUDE.local.md.example`) lets the template stub commit while keeping your filled-in version local.
 
 ---
 
@@ -462,8 +517,10 @@ claude-mcp-kkskills/
 ├── docker-compose.yml       # one-command HTTP bring-up
 ├── .dockerignore
 ├── .env.example             # copy to .env to override KKSKILLS_* vars
-├── SKILL_TEMPLATE.md
-├── CLAUDE.md
+├── SKILL_TEMPLATE.md        # starter for every new skill
+├── CLAUDE.md                # generic maintenance rules (committed)
+├── CLAUDE.local.md          # your project-specific quick-reference (gitignored)
+├── CLAUDE.local.md.example  # template stub for the file above
 ├── README.md
 └── .gitignore
 ```

@@ -2,36 +2,31 @@
 
 This file is the standing instruction for any AI agent (Claude, or any other model) working in this repo. It defines when to **update** an existing skill and when to **add** a new one.
 
+> **Forked this repo as a template?** This file holds only the **generic** rules — the decision loop, file structure, restart procedure. Your own project-specific quick-reference (current skill inventory, codebase shortcuts, team conventions) belongs in **`CLAUDE.local.md`**, which is gitignored. Bootstrap it from `CLAUDE.local.md.example`.
+
 ## What this repo is
 
-A personal Claude skill library plus a stdio MCP server that exposes those skills to MCP-aware hosts (Claude Desktop, Cowork, Cursor, etc.).
+A personal Claude skill library plus a stdio + HTTP MCP server that exposes those skills to MCP-aware hosts (Claude Desktop, Cowork, Cursor, Claude Code CLI, claude.ai web, etc.).
+
+Generic layout (a fork can grow `skills/` to any size; the structure stays the same):
 
 ```
-claude-mcp-kkskills/
+<repo-root>/
 ├── skills/                     One folder per skill, each with a SKILL.md
-│   ├── user-profile/
-│   ├── project-trader-platform/
-│   ├── project-sprint-roadmap/
-│   ├── feedback-no-duplicate-docs/
-│   ├── feedback-use-full-filenames/
-│   ├── feedback-verify-with-real-data/
-│   ├── feedback-additive-changes/
-│   ├── feedback-migrations-additive-first/
-│   ├── reference-trader-platform-layout/
-│   ├── reference-external-providers/
-│   ├── reference-clean-architecture/
-│   └── reference-conventional-commits/
-├── mcp-server/                 TypeScript stdio MCP server
+│   └── <skill-name>/SKILL.md
+├── mcp-server/                 TypeScript stdio + HTTP MCP server
 │   ├── src/index.ts
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── README.md
-├── SKILL_TEMPLATE.md           The frontmatter + section template every skill follows
-├── CLAUDE.md                   ← you're reading it
+├── SKILL_TEMPLATE.md           Starter for every new skill — copy this
+├── CLAUDE.md                   ← you're reading it (generic maintenance rules)
+├── CLAUDE.local.md             Your own project-specific quick-reference (gitignored)
+├── CLAUDE.local.md.example     Template stub for the file above
 └── README.md                   Repo overview, install + wire-up
 ```
 
-Each `skills/<name>/SKILL.md` follows the template: YAML frontmatter (`name`, `description`) followed by `Overview`, `When to Use`, `Process / Steps`, `Rules & Constraints`, `Examples`.
+Each `skills/<name>/SKILL.md` follows `SKILL_TEMPLATE.md`: YAML frontmatter (`name`, `description`) followed by `Overview`, `When to Use`, `Process / Steps`, `Rules & Constraints`, `Examples`.
 
 ## Decision rule: update existing vs. add new
 
@@ -41,11 +36,11 @@ When you observe a recurring behaviour pattern, feedback, or workflow that you w
 
 Run through this checklist:
 
-- ☐ Does the new pattern reinforce, refine, or contradict a rule already in one of the 9 skills?
+- ☐ Does the new pattern reinforce, refine, or contradict a rule already in one of the existing skills?
 - ☐ Does the trigger overlap with an existing skill's `description` field?
 - ☐ Would the new content extend an existing skill's `Process / Steps`, `Rules & Constraints`, or `Examples`?
 
-If **yes to any** → **update** the existing skill. Do not create a new one. Spawning parallel skills with overlapping triggers is the same anti-pattern as duplicate tracking docs (see `feedback-no-duplicate-docs`).
+If **yes to any** → **update** the existing skill. Do not create a new one. Spawning parallel skills with overlapping triggers is the same anti-pattern as duplicate tracking docs.
 
 How to update:
 1. `Read` the relevant `skills/<name>/SKILL.md`.
@@ -62,11 +57,7 @@ A new skill earns its place only when:
 - ☐ The pattern is durable — not just a one-off correction (one-off corrections go in `Examples` of an existing skill).
 
 How to add:
-1. Pick a `kebab-case` name. Use a prefix that matches the type:
-   - `user-` for user profile / preferences
-   - `project-` for project context
-   - `feedback-` for recurring behaviour rules (what to do / what to avoid)
-   - `reference-` for lookup material (paths, providers, conventions)
+1. Pick a `kebab-case` name. The shipped examples use type prefixes (`user-`, `project-`, `feedback-`, `reference-`) — see the header of `SKILL_TEMPLATE.md` for what each means. Reuse the convention or pick your own, but be consistent.
 2. Create `skills/<name>/SKILL.md`. Copy `SKILL_TEMPLATE.md` as the starting frame.
 3. Fill in the frontmatter (`name` must match the directory name; `description` must include explicit triggers and explicit non-triggers).
 4. Each `Process / Steps` step should have **a concrete sub-checklist and an example** wherever it helps.
@@ -79,67 +70,18 @@ If you're unsure whether an update or a new skill is right, ask. The cost of ask
 
 ## SKILL.md structure (enforced)
 
-Every skill file MUST have:
+Every skill file MUST follow `SKILL_TEMPLATE.md` — frontmatter + the same fixed sections in the same order. The `description` field is what the MCP server returns from `list_skills`, and what the AI uses to decide relevance. Make the triggers specific — listing actual phrases ("AUDIT.md", "expand-contract", a CLI command the user types) beats abstract descriptions.
 
-```markdown
----
-name: <kebab-case-name>          # must match the directory name
-description: "Use this skill when [situation].
-  Triggers include: [phrases the user actually uses].
-  Also use when [edge cases].
-  Do NOT use for [non-triggers]."
----
+## Project-specific quick reference
 
-# <Skill Title>
+For the **current set of skills in this repo** and **codebase-specific shortcuts** (file paths, sprint scope, deploy commands, team conventions), see **`CLAUDE.local.md`** (gitignored).
 
-## Overview
-One paragraph. What it covers, why it exists.
+That file is yours to maintain. If it doesn't exist yet:
 
-## When to Use
-- ✅ When [trigger]
-- ❌ When [non-trigger]
-
-## Process / Steps
-### Step 1 — <action>
-- ☐ Concrete sub-step.
-- ☐ Concrete sub-step.
-
-**Example:** A worked example for this step.
-
-### Step 2 — <action>
-...
-
-## Checklist Before <something>
-- ☐ Item.
-- ☐ Item.
-
-## Rules & Constraints
-- ALWAYS: ...
-- NEVER: ...
-
-## Examples
-**Input:** ...
-→ **Output:** ...
+```bash
+cp CLAUDE.local.md.example CLAUDE.local.md
+# then fill in your skill inventory + shortcuts
 ```
-
-The `description` field is what the MCP server returns from `list_skills`, and what the AI uses to decide relevance. Make the triggers specific — listing actual phrases ("ทำต่อ", "AUDIT.md") beats abstract descriptions.
-
-## Quick reference — when each existing skill applies
-
-| Skill                                  | Apply when...                                                       |
-|----------------------------------------|---------------------------------------------------------------------|
-| `user-profile`                         | Calibrating tone/depth on every first response.                     |
-| `project-trader-platform`              | The user is in the trader-platform repo or refers to it.            |
-| `project-sprint-roadmap`               | Scoping/planning trader-platform re-arch work.                      |
-| `feedback-no-duplicate-docs`           | About to `Write` a new `.md` tracking file.                         |
-| `feedback-use-full-filenames`          | About to mention a dated project doc by short name.                 |
-| `feedback-verify-with-real-data`       | About to claim codebase state or API behaviour.                     |
-| `feedback-additive-changes`            | Proposing a refactor, cleanup, or deletion (code).                  |
-| `feedback-migrations-additive-first`   | Writing or reviewing a DB schema migration. Expand-contract.        |
-| `reference-trader-platform-layout`     | Looking up file paths, naming conventions, deploy commands.         |
-| `reference-external-providers`         | Touching any external API call (TD/AV/Finnhub/FMP).                 |
-| `reference-clean-architecture`         | Designing or refactoring service architecture (any stack).          |
-| `reference-conventional-commits`       | Writing a git commit message, PR title, or changelog entry.         |
 
 ## Maintenance workflow at a glance
 

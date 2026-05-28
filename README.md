@@ -117,17 +117,20 @@ sequenceDiagram
 
 ## What's in the library
 
-| Skill                              | When it applies                                                |
-|------------------------------------|----------------------------------------------------------------|
-| `user-profile`                     | Calibrating tone, register, response style.                     |
-| `project-trader-platform`          | Working in the trader-platform project context.                 |
-| `project-sprint-roadmap`           | Scoping/planning re-architecture work.                          |
-| `feedback-no-duplicate-docs`       | Avoiding parallel tracking docs (CHECKLIST/TODO/TESTING drift). |
-| `feedback-use-full-filenames`      | Referencing dated project docs unambiguously.                   |
-| `feedback-verify-with-real-data`   | Grounding claims in grep/probe, not assumption.                 |
-| `feedback-additive-changes`        | Refactors stay additive; legacy code stays dormant, not deleted.|
-| `reference-trader-platform-layout` | File paths, naming conventions, deploy commands.                |
-| `reference-external-providers`     | External API rate limits, plan tiers, quirks.                   |
+| Skill                                  | When it applies                                                     |
+|----------------------------------------|---------------------------------------------------------------------|
+| `user-profile`                         | Calibrating tone, register, response style.                          |
+| `project-trader-platform`              | Working in the trader-platform project context.                      |
+| `project-sprint-roadmap`               | Scoping/planning re-architecture work.                               |
+| `feedback-no-duplicate-docs`           | Avoiding parallel tracking docs (CHECKLIST/TODO/TESTING drift).      |
+| `feedback-use-full-filenames`          | Referencing dated project docs unambiguously.                        |
+| `feedback-verify-with-real-data`       | Grounding claims in grep/probe, not assumption.                      |
+| `feedback-additive-changes`            | Refactors stay additive; legacy code stays dormant, not deleted.     |
+| `feedback-migrations-additive-first`   | DB schema changes via expand-contract — never add+tighten+drop in one. |
+| `reference-trader-platform-layout`     | File paths, naming conventions, deploy commands.                     |
+| `reference-external-providers`         | External API rate limits, plan tiers, quirks.                        |
+| `reference-clean-architecture`         | Layering rules + per-stack boundary tools (Python/TS/Java/Go).       |
+| `reference-conventional-commits`       | Commit message / PR title / changelog format.                        |
 
 See `CLAUDE.md` for the maintenance rules — when to update an existing skill vs. add a new one — and `SKILL_TEMPLATE.md` for the structure each skill follows.
 

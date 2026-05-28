@@ -16,8 +16,11 @@ claude-mcp-kkskills/
 │   ├── feedback-use-full-filenames/
 │   ├── feedback-verify-with-real-data/
 │   ├── feedback-additive-changes/
+│   ├── feedback-migrations-additive-first/
 │   ├── reference-trader-platform-layout/
-│   └── reference-external-providers/
+│   ├── reference-external-providers/
+│   ├── reference-clean-architecture/
+│   └── reference-conventional-commits/
 ├── mcp-server/                 TypeScript stdio MCP server
 │   ├── src/index.ts
 │   ├── package.json
@@ -123,17 +126,20 @@ The `description` field is what the MCP server returns from `list_skills`, and w
 
 ## Quick reference — when each existing skill applies
 
-| Skill                              | Apply when...                                                   |
-|------------------------------------|-----------------------------------------------------------------|
-| `user-profile`                     | Calibrating tone/depth on every first response.                 |
-| `project-trader-platform`          | The user is in the trader-platform repo or refers to it.        |
-| `project-sprint-roadmap`           | Scoping/planning trader-platform re-arch work.                  |
-| `feedback-no-duplicate-docs`       | About to `Write` a new `.md` tracking file.                     |
-| `feedback-use-full-filenames`      | About to mention a dated project doc by short name.             |
-| `feedback-verify-with-real-data`   | About to claim codebase state or API behaviour.                 |
-| `feedback-additive-changes`        | Proposing a refactor, cleanup, or deletion.                     |
-| `reference-trader-platform-layout` | Looking up file paths, naming conventions, deploy commands.     |
-| `reference-external-providers`     | Touching any external API call (TD/AV/Finnhub/FMP).             |
+| Skill                                  | Apply when...                                                       |
+|----------------------------------------|---------------------------------------------------------------------|
+| `user-profile`                         | Calibrating tone/depth on every first response.                     |
+| `project-trader-platform`              | The user is in the trader-platform repo or refers to it.            |
+| `project-sprint-roadmap`               | Scoping/planning trader-platform re-arch work.                      |
+| `feedback-no-duplicate-docs`           | About to `Write` a new `.md` tracking file.                         |
+| `feedback-use-full-filenames`          | About to mention a dated project doc by short name.                 |
+| `feedback-verify-with-real-data`       | About to claim codebase state or API behaviour.                     |
+| `feedback-additive-changes`            | Proposing a refactor, cleanup, or deletion (code).                  |
+| `feedback-migrations-additive-first`   | Writing or reviewing a DB schema migration. Expand-contract.        |
+| `reference-trader-platform-layout`     | Looking up file paths, naming conventions, deploy commands.         |
+| `reference-external-providers`         | Touching any external API call (TD/AV/Finnhub/FMP).                 |
+| `reference-clean-architecture`         | Designing or refactoring service architecture (any stack).          |
+| `reference-conventional-commits`       | Writing a git commit message, PR title, or changelog entry.         |
 
 ## Maintenance workflow at a glance
 

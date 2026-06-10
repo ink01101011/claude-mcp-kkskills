@@ -7,6 +7,7 @@
 ![Transports](https://img.shields.io/badge/transports-stdio%20%2B%20HTTP-6E40C9)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 ![Skills](https://img.shields.io/badge/skills-9-orange)
+![Marketplace](https://img.shields.io/badge/plugin%20marketplace-ready-8A2BE2)
 ![Status](https://img.shields.io/badge/status-active-success)
 
 A personal Claude skill library exposed as an MCP server (stdio + Streamable HTTP) — **also usable as a template** for building your own skill library.
@@ -41,6 +42,27 @@ Then add to `claude_desktop_config.json` and restart:
 ```
 
 Need HTTP, Docker, or a remote connector instead? Jump to [Quick start](#quick-start-5-steps).
+
+## Install as a Claude Code plugin (marketplace)
+
+This repo doubles as a [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces). The marketplace ships **only the generic, reusable skills** as a single plugin (`kkskills-essentials`); the MCP server above still serves the **full** library, including the project-specific skills.
+
+```shell
+# add this repo as a marketplace, then install the plugin
+/plugin marketplace add kktest/claude-mcp-kkskills
+/plugin install kkskills-essentials@kkskills
+```
+
+The plugin bundles 8 skills: `feedback-additive-changes`, `feedback-migrations-additive-first`, `feedback-no-duplicate-docs`, `feedback-use-full-filenames`, `feedback-verify-with-real-data`, `reference-clean-architecture`, `reference-conventional-commits`, `user-profile`. Once installed they're invocable namespaced as `kkskills-essentials:<skill>`.
+
+Two delivery channels, one source of truth:
+
+| Channel | What it serves | How |
+|---------|----------------|-----|
+| **MCP server** (`mcp-server/`) | all 16 skills in `skills/` | `list_skills` / `read_skill` tools |
+| **Plugin marketplace** (`.claude-plugin/`) | the 8 generic skills | native `/plugin install` |
+
+The marketplace files (`.claude-plugin/marketplace.json` + `plugins/kkskills-essentials/`) reference the canonical skill folders via **symlinks**, so there is no second copy to keep in sync. Validate locally with `claude plugin validate .`.
 
 ## Why
 

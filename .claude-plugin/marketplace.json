@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "kkskills",
+  "owner": {
+    "name": "Supakit",
+    "email": "supakit.kitj@gmail.com"
+  },
+  "description": "Ink's reusable Claude skills — feedback discipline + architecture/commit references.",
+  "plugins": [
+    {
+      "name": "kkskills-essentials",
+      "source": "./plugins/kkskills-essentials",
+      "description": "Generic, project-agnostic working skills (additive changes, verify-with-real-data, clean architecture, conventional commits, etc.)",
+      "license": "MIT",
+      "keywords": ["skills", "workflow", "code-review", "architecture"]
+    }
+  ]
+}

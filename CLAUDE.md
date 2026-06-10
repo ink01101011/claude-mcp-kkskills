@@ -109,3 +109,20 @@ npm run build
 ```
 
 That's the whole loop. Keep skills small, specific, and trigger-rich. The library only stays useful if it doesn't drift into vagueness.
+
+## Plugin marketplace (generic skills only)
+
+This repo is also a Claude Code plugin marketplace. The marketplace exposes **only the generic, reusable skills** as one plugin, `kkskills-essentials`:
+
+- `.claude-plugin/marketplace.json` — the catalog (marketplace name `kkskills`).
+- `plugins/kkskills-essentials/.claude-plugin/plugin.json` — the plugin manifest.
+- `plugins/kkskills-essentials/skills/<name>` — **symlinks** to the canonical `skills/<name>` folders (single source of truth; no second copy).
+
+When you add or rename a **generic** skill that should ship to others:
+
+1. Create/edit the skill under `skills/<name>/` as usual.
+2. Add a symlink: `ln -s ../../../skills/<name> plugins/kkskills-essentials/skills/<name>` (relative target, so it survives a clone).
+3. **Bump `version`** in `plugins/kkskills-essentials/.claude-plugin/plugin.json` — a pinned version that doesn't change means installed users keep the cached copy.
+4. Validate: `claude plugin validate .` and `claude plugin validate ./plugins/kkskills-essentials`.
+
+Project-specific skills (`project-*`, anything tied to a private codebase) stay out of `plugins/` — they're served by the MCP server only. Don't symlink them.

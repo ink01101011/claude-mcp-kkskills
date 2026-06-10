@@ -49,7 +49,7 @@ This repo doubles as a [Claude Code plugin marketplace](https://code.claude.com/
 
 ```shell
 # add this repo as a marketplace, then install the plugin
-/plugin marketplace add kktest/claude-mcp-kkskills
+/plugin marketplace add Ink01101011/claude-mcp-kkskills
 /plugin install kkskills-essentials@kkskills
 ```
 
